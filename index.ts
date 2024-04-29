@@ -3,15 +3,11 @@ import { Cohere } from "cohere-ai";
 import { JsonSchema7LiteralType, JsonSchema7ObjectType, JsonSchema7TypeUnion } from "zod-to-json-schema";
 
 
-export const convert = (name: string, description: string, schema: JsonSchema7TypeUnion): Cohere.Tool => {
-    return {
-        name,
-        description,
-        parameterDefinitions: flattenObject(schema)
-    };
+export const convert = (schema: JsonSchema7TypeUnion): Cohere.Tool["parameterDefinitions"] => {
+    return flattenObject(schema)
 }
 
-export const unconvert = (tool: Cohere.Tool): JsonSchema7ObjectType => {
+export const unconvert = (tool: Cohere.Tool["parameterDefinitions"]): JsonSchema7ObjectType => {
     return unflattenObject(tool);
 }
 
@@ -32,14 +28,14 @@ const flattenObject = (schema: JsonSchema7ObjectType, prefix: string = ""): Cohe
     return result;
 }
 
-const unflattenObject = (schema: Cohere.Tool): JsonSchema7ObjectType => {
+const unflattenObject = (parameterDefinitions: Cohere.Tool["parameterDefinitions"]): JsonSchema7ObjectType => {
     let result: JsonSchema7ObjectType = {
         type: "object",
         properties: {},
         required: []
     };
 
-    for (const [key, value] of Object.entries(schema.parameterDefinitions)) {
+    for (const [key, value] of Object.entries(parameterDefinitions)) {
         const path = key.split(".");
         let current = result;
         for (let i = 0; i < path.length - 1; i++) {

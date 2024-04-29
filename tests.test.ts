@@ -33,32 +33,29 @@ const testSchema: JsonSchema7TypeUnion = {
     }
 }
 
-const expected: Cohere.Tool = {
-    name: "toolname",
-    description: "tooldescription",
-    parameterDefinitions: {
-        name: {
-            description: "name",
-            type: "str",
-            required: true
-        },
-        age: {
-            description: "age",
-            type: "float",
-            required: true
-        },
-        "preferences.color": {
-            description: "color",
-            type: "str",
-            required: false
-        },
-        "preferences.food": {
-            description: "food",
-            type: "str",
-            required: false
-        }
+const expected: Cohere.Tool["parameterDefinitions"] = {
+    name: {
+        description: "name",
+        type: "str",
+        required: true
     },
+    age: {
+        description: "age",
+        type: "float",
+        required: true
+    },
+    "preferences.color": {
+        description: "color",
+        type: "str",
+        required: false
+    },
+    "preferences.food": {
+        description: "food",
+        type: "str",
+        required: false
+    }
 }
+
 
 const Person = z.object({
     name: z.string({ description: "name" }),
@@ -70,7 +67,7 @@ const Person = z.object({
 });
 
 test('test convert', () => {
-    expect(convert("toolname", "tooldescription", testSchema)).toEqual(expected);
+    expect(convert(testSchema)).toEqual(expected);
 });
 
 test('test unconvert', () => {
@@ -80,7 +77,7 @@ test('test unconvert', () => {
 test('zod test', () => {
     const jsonSchema = zodToJsonSchema(Person);
 
-    expect(convert("toolname", "tooldescription", jsonSchema)).toEqual(expected);
+    expect(convert(jsonSchema)).toEqual(expected);
 });
 
 test('openai usage', async () => {
@@ -109,7 +106,7 @@ test('cohere usage', async () => {
     const cohere = new CohereClient();
 
     const jsonSchema = zodToJsonSchema(Person);
-    const cohereSchema = convert("toolname", "tooldescription", jsonSchema);
+    const cohereSchema = convert(jsonSchema);
 
     const chatCompletion = await cohere.chat({
         message: "Say this is a test",
