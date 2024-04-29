@@ -5,6 +5,8 @@ import { z } from "zod";
 import { JsonSchema7TypeUnion, zodToJsonSchema } from "zod-to-json-schema";
 import { convert, unconvert } from ".";
 
+const message = "my friend is called John and he is 25 years old. He likes the color blue and his favorite food is pizza. Add him to the databse!"
+
 const testSchema: JsonSchema7TypeUnion = {
     type: "object",
     required: ["name", "age"],
@@ -44,12 +46,12 @@ const expected: Cohere.Tool["parameterDefinitions"] = {
         type: "float",
         required: true
     },
-    "preferences.color": {
+    "preferences__color": {
         description: "color",
         type: "str",
         required: false
     },
-    "preferences.food": {
+    "preferences__food": {
         description: "food",
         type: "str",
         required: false
@@ -88,17 +90,27 @@ test('openai usage', async () => {
 
 
     const chatCompletion = await openai.chat.completions.create({
-        messages: [{ role: 'user', content: 'Say this is a test' }],
+        messages: [{ role: 'user', content: message }],
         model: 'gpt-3.5-turbo',
         tools: [{
             function: {
-                name: 'toolname',
-                description: 'tooldescription',
+                name: 'addPersonToDatabase',
+                description: 'Adds a person to the database',
                 parameters: jsonSchema
             },
             type: 'function'
         }]
     });
+
+    expect(JSON.parse(chatCompletion.choices[0].message.tool_calls?.[0].function.arguments)).toEqual({
+        name: "John",
+        age: 25,
+        preferences: {
+            color: "blue",
+            food: "pizza"
+        }
+    });
+
 })
 
 test('cohere usage', async () => {
@@ -106,15 +118,25 @@ test('cohere usage', async () => {
     const cohere = new CohereClient();
 
     const jsonSchema = zodToJsonSchema(Person);
-    const cohereSchema = convert(jsonSchema);
+    const parameterDefinitions = convert(jsonSchema);
 
     const chatCompletion = await cohere.chat({
-        message: "Say this is a test",
+        message,
         tools: [{
-            name: 'toolname',
-            description: 'tooldescription',
-            parameterDefinitions: cohereSchema.parameterDefinitions
+            name: 'addPersonToDatabase',
+            description: 'Adds a person to the database',
+            parameterDefinitions
         }]
     });
 
+    const params = unconvert(chatCompletion.toolCalls?.[0].parameters)
+
+    expect(params).toEqual({
+        name: "John",
+        age: 25,
+        preferences: {
+            color: "blue",
+            food: "pizza"
+        }
+    });
 })

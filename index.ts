@@ -1,20 +1,22 @@
 
-import { Cohere } from "cohere-ai";
 import { JsonSchema7LiteralType, JsonSchema7ObjectType, JsonSchema7TypeUnion } from "zod-to-json-schema";
 
+const nestDelimiter = "__";
 
-export const convert = (schema: JsonSchema7TypeUnion): Cohere.Tool["parameterDefinitions"] => {
+type ParameterDefinitions = Required<ParameterDefinitions>;
+
+export const convert = (schema: JsonSchema7TypeUnion): ParameterDefinitions => {
     return flattenObject(schema)
 }
 
-export const unconvert = (tool: Cohere.Tool["parameterDefinitions"]): JsonSchema7ObjectType => {
+export const unconvert = (tool: ParameterDefinitions): JsonSchema7ObjectType => {
     return unflattenObject(tool);
 }
 
-const flattenObject = (schema: JsonSchema7ObjectType, prefix: string = ""): Cohere.Tool["parameterDefinitions"] => {
-    let result: Cohere.Tool["parameterDefinitions"] = {};
+const flattenObject = (schema: JsonSchema7ObjectType, prefix: string = ""): ParameterDefinitions => {
+    let result: ParameterDefinitions = {};
     for (const [key, value] of Object.entries(schema.properties)) {
-        const path = [prefix, key].filter(Boolean).join(".")
+        const path = [prefix, key].filter(Boolean).join(nestDelimiter)
         if (value.type === "object") {
             result = { ...result, ...flattenObject(value, path) };
         } else {
@@ -28,7 +30,7 @@ const flattenObject = (schema: JsonSchema7ObjectType, prefix: string = ""): Cohe
     return result;
 }
 
-const unflattenObject = (parameterDefinitions: Cohere.Tool["parameterDefinitions"]): JsonSchema7ObjectType => {
+const unflattenObject = (parameterDefinitions: ParameterDefinitions): JsonSchema7ObjectType => {
     let result: JsonSchema7ObjectType = {
         type: "object",
         properties: {},
@@ -36,7 +38,7 @@ const unflattenObject = (parameterDefinitions: Cohere.Tool["parameterDefinitions
     };
 
     for (const [key, value] of Object.entries(parameterDefinitions)) {
-        const path = key.split(".");
+        const path = key.split(nestDelimiter);
         let current = result;
         for (let i = 0; i < path.length - 1; i++) {
             if (current.properties[path[i]] === undefined) {
@@ -55,7 +57,7 @@ const unflattenObject = (parameterDefinitions: Cohere.Tool["parameterDefinitions
             current.required = [...current.required, path[path.length - 1]];
         }
         current.properties[path[path.length - 1]] = {
-            type: convertFromPythonType(value.type),
+            type: value.type && convertFromPythonType(value.type),
             description: value.description
         }
     }
