@@ -30,36 +30,22 @@ const flattenObject = (schema: JsonSchema7ObjectType, prefix: string = ""): Para
     return result;
 }
 
-const unflattenObject = (parameterDefinitions: ParameterDefinitions): JsonSchema7ObjectType => {
+const unflattenObject = (params: object): object => {
     let result: JsonSchema7ObjectType = {
-        type: "object",
-        properties: {},
-        required: []
     };
 
-    for (const [key, value] of Object.entries(parameterDefinitions)) {
+    for (const [key, value] of Object.entries(params)) {
         const path = key.split(nestDelimiter);
         let current = result;
         for (let i = 0; i < path.length - 1; i++) {
-            if (current.properties[path[i]] === undefined) {
-                current.properties[path[i]] = {
-                    type: "object",
-                    properties: {},
+            if (current[path[i]] === undefined) {
+                current[path[i]] = {
                 }
             }
 
-            current = current.properties[path[i]] as JsonSchema7ObjectType;
+            current = current[path[i]];
         }
-        if (value.required) {
-            if (current.required === undefined) {
-                current.required = [];
-            }
-            current.required = [...current.required, path[path.length - 1]];
-        }
-        current.properties[path[path.length - 1]] = {
-            type: value.type && convertFromPythonType(value.type),
-            description: value.description
-        }
+        current[path[path.length - 1]] = value
     }
     return result;
 }

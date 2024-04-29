@@ -58,6 +58,22 @@ const expected: Cohere.Tool["parameterDefinitions"] = {
     }
 }
 
+const cohereCall = {
+    name: "John",
+    age: 25,
+    "preferences__color": "blue",
+    "preferences__food": "pizza"
+}
+
+const jsonCall = {
+    name: "John",
+    age: 25,
+    preferences: {
+        color: "blue",
+        food: "pizza"
+    }
+}
+
 
 const Person = z.object({
     name: z.string({ description: "name" }),
@@ -73,7 +89,7 @@ test('test convert', () => {
 });
 
 test('test unconvert', () => {
-    expect(unconvert(expected)).toEqual(testSchema);
+    expect(unconvert(cohereCall)).toEqual(jsonCall);
 });
 
 test('zod test', () => {
