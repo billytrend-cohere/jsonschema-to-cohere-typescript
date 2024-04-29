@@ -80,22 +80,3 @@ const convertToPythonType = (type: JsonSchema7LiteralType["type"]): string => {
             return type;
     }
 }
-
-const convertFromPythonType = (type: string): JsonSchema7LiteralType["type"] => {
-    switch (type) {
-        case "str":
-            return "string";
-        case "float":
-            return "number";
-        case "int":
-            return "number";
-        case "bool":
-            return "boolean";
-        case "Dict":
-            return "object";
-        case "List":
-            return "array";
-        default:
-            throw new Error(`Unknown type ${type}`);
-    }
-}
