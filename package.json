@@ -11,6 +11,8 @@
   "dependencies": {
     "cohere-ai": "^7.9.5",
     "jest": "^29.7.0",
+    "openai": "^4.38.5",
+    "zod": "^3.23.4",
     "zod-to-json-schema": "^3.23.0"
   },
   "devDependencies": {
